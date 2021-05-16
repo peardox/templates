@@ -34,15 +34,14 @@ implementation
 
 procedure TCastleForm.FormCreate(Sender: TObject);
 begin
+  InitializeLog;
   WriteLnLog('FormCreate : ' + FormatFloat('####0.000', (CastleGetTickCount64 - AppTime) / 1000) + ' : ');
   {$ifdef darwin}
   WindowState := wsFullScreen;
   {$endif}
   AppTime := CastleGetTickCount64;
   PrepDone := False;
-  Profiler.Enabled := true;
-  InitializeLog;
-  Caption := '__PROJNAME__ CGE Lazarus Application';
+  Caption := '__PROJNAME__ GUI';
 end;
 
 procedure TCastleForm.FormDestroy(Sender: TObject);
@@ -57,7 +56,7 @@ begin
   TCastleControlBase.MainControl := Window;
   CastleApp := TCastleApp.Create(Application);
   TUIState.Current := CastleApp;
-  Window.Container.UIScaling := usDpiScale;
+  Window.Container.UIScaling := usNone;
 end;
 
 procedure TCastleForm.WindowClose(Sender: TObject);

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project 
-  name="__PROJNAME__App" 
+  name="__PROJNAME__" 
   standalone_source="__PROJNAME__App.lpr"
   game_units="AppInitialization"
-  caption="__PROJNAME__ Mobile App"
+  caption="__PROJNAME__"
   qualified_name="com.peardox.__PROJNAME__">
   <package>
     <include path="README.txt" />
@@ -23,5 +23,5 @@
     </custom_options>
   </compiler_options>
   <android project_type="integrated" />
-  <version value="0.1.0" code="2" />
+  <version value="1.0.0" code="1" />
 </project>

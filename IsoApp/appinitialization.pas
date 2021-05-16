@@ -23,10 +23,9 @@ begin
     InitializeLog;
   RenderReady := False;
   PrepDone := False;
-  Profiler.Enabled := true;
   CastleApp := TCastleApp.Create(Application);
   TUIState.Current := CastleApp;
-  Window.Container.UIScaling := usDpiScale;
+  Window.Container.UIScaling := usNone;
 end;
 
 initialization
@@ -46,7 +45,7 @@ initialization
 
   { Create and assign Application.MainWindow. }
   Window := TCastleWindowBase.Create(Application);
-  Window.Caption := '__PROJNAME__ CGE Standalone Application';
+  Window.Caption := '__PROJNAME__';
   Application.MainWindow := Window;
 
   { Initialize Application.OnInitialize. }

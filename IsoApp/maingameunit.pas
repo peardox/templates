@@ -21,6 +21,13 @@ uses
   CastleApplicationProperties, CastleLog, CastleTimeUtils, CastleKeysMouse;
 
 type
+  { TCastleSceneHelper }
+
+  TCastleSceneHelper = class helper for TCastleScene
+  public
+     procedure Normalize;
+  end;
+
   { TCastleApp }
 
   TCastleApp = class(TUIState)
@@ -32,36 +39,28 @@ type
     function  Press(const Event: TInputPressRelease): Boolean; override; // TUIState
     function  Release(const Event: TInputPressRelease): Boolean; override; // TUIState
   private
-    PointlessButton: TCastleButton;
     Viewport: TCastleViewport;
     Scene: TCastleScene;
     LabelFPS: TCastleLabel;
-    LabelSpare: TCastleLabel;
-    LabelCamPos: TCastleLabel;
-    LabelCamDir: TCastleLabel;
-    LabelCamUp: TCastleLabel;
     LabelRender: TCastleLabel;
-    LabelSceneLoad: TCastleLabel;
+    LabelSpare: TCastleLabel;
   public
+    procedure BootStrap;
     procedure PointlessButtonClick(Sender: TObject);
     procedure CreateButton(var objButton: TCastleButton; const ButtonText: String; const Line: Integer; const ButtonCode: TNotifyEvent = nil);
-    procedure CreateLabel(var objLabel: TCastleLabel; const Line: Integer; const BottomUp: Boolean = True);
+    procedure CreateLabel(var objLabel: TCastleLabel; const Line: Integer; const BottomUp: Boolean = True; RightAlign: Boolean = False);
     procedure Start; override; // TUIState
     procedure Stop; override; // TUIState
     procedure LoadViewport;
     procedure LoadScene(filename: String);
+    procedure ViewFromRadius(const ARadius: Single; const ADirection: TVector3);
   end;
 
 var
   AppTime: Int64;
   PrepDone: Boolean;
-  CastleApp: TCastleApp;
   RenderReady: Boolean;
-
-const
-  RotateScene: Boolean = False;
-  SecsPerRot: Single = 12;
-  SceneFile: String = 'castle-data:/box_roty.x3dv';
+  CastleApp: TCastleApp;
 
 implementation
 {$ifdef cgeapp}
@@ -70,16 +69,39 @@ uses AppInitialization;
 uses GUIInitialization;
 {$endif}
 
-procedure TCastleApp.PointlessButtonClick(Sender: TObject);
+{ TCastleSceneHelper }
+
+{ Normalize - Center the model in a 1x1x1 cube }
+procedure TCastleSceneHelper.Normalize;
+begin
+  if not(RootNode = nil) then
+    begin
+    if not BoundingBox.IsEmptyOrZero then
+      begin
+        if BoundingBox.MaxSize > 0 then
+          begin
+            Center := Vector3(Min(BoundingBox.Data[0].X, BoundingBox.Data[1].X) + (BoundingBox.SizeX / 2),
+                              Min(BoundingBox.Data[0].Y, BoundingBox.Data[1].Y) + (BoundingBox.SizeY / 2),
+                              Min(BoundingBox.Data[0].Z, BoundingBox.Data[1].Z) + (BoundingBox.SizeZ / 2));
+            Scale := Vector3(1 / BoundingBox.MaxSize,
+                             1 / BoundingBox.MaxSize,
+                             1 / BoundingBox.MaxSize);
+            Translation := -Center;
+          end;
+      end;
+    end;
+end;
+
+{ TCastleApp }
+
+procedure TCastleApp.BootStrap;
 var
   ProcTimer: Int64;
 begin
-  PointlessButton.Exists := False;
   ProcTimer := CastleGetTickCount64;
-  LoadScene(SceneFile);
+  LoadScene('castle-data:/up.glb');
   ProcTimer := CastleGetTickCount64 - ProcTimer;
   WriteLnLog('ProcTimer (LoadScene) = ' + FormatFloat('####0.000', ProcTimer / 1000) + ' seconds');
-  LabelSceneLoad.Caption := 'LoadScene = ' + FormatFloat('####0.000', ProcTimer / 1000) + ' seconds';
 end;
 
 procedure TCastleApp.CreateButton(var objButton: TCastleButton; const ButtonText: String; const Line: Integer; const ButtonCode: TNotifyEvent = nil);
@@ -92,7 +114,7 @@ begin
   InsertFront(objButton);
 end;
 
-procedure TCastleApp.CreateLabel(var objLabel: TCastleLabel; const Line: Integer; const BottomUp: Boolean = True);
+procedure TCastleApp.CreateLabel(var objLabel: TCastleLabel; const Line: Integer; const BottomUp: Boolean = True; RightAlign: Boolean = False);
 begin
   objLabel := TCastleLabel.Create(Application);
   objLabel.Padding := 5;
@@ -100,6 +122,10 @@ begin
   objLabel.Frame := True;
   objLabel.FrameColor := Black;
   objLabel.Anchor(hpLeft, 10);
+  if RightAlign then
+    objLabel.Anchor(hpRight, -10)
+  else
+    objLabel.Anchor(hpLeft, 10);
   if BottomUp then
     objLabel.Anchor(vpBottom, 10 + (Line * 35))
   else
@@ -107,48 +133,52 @@ begin
   InsertFront(objLabel);
 end;
 
+procedure TCastleApp.ViewFromRadius(const ARadius: Single; const ADirection: TVector3);
+var
+  Spherical: TVector3;
+begin
+  Spherical := -ADirection.Normalize;
+  Spherical := Spherical * ARadius;
+  Viewport.Camera.Up := Vector3(0, 1, 0);
+  Viewport.Camera.Direction := ADirection;
+  Viewport.Camera.Position  := Spherical;
+end;
+
 procedure TCastleApp.LoadViewport;
 begin
-  WriteLnLog('LoadViewport #1 : ' + FormatFloat('####0.000', (CastleGetTickCount64 - AppTime) / 1000) + ' : ');
-  // Set up the main viewport
   Viewport := TCastleViewport.Create(Application);
-  // Use all the viewport
-  Viewport.FullSize := true;
-  // Automatically position the camera
-  Viewport.AutoCamera := True;
-  // Use auto navigation keys
-  Viewport.AutoNavigation := True;
+  Viewport.FullSize := True;
+  Viewport.AutoCamera := False;
+  Viewport.Setup2D;
+  Viewport.NavigationType := ntNone;
+  Viewport.AssignDefaultCamera;
+  Viewport.Camera.Orthographic.Width := 2;
+  Viewport.Camera.Orthographic.Height := 2;
+  Viewport.Camera.Orthographic.Origin := Vector2(0.5, 0.5);
+  Viewport.Camera.Orthographic.Scale := 1;
+  Viewport.Camera.ProjectionType := ptOrthographic;
 
-  // Add the viewport to the CGE control
   InsertFront(Viewport);
 
-  CreateLabel(LabelCamPos, 0, False);
-  CreateLabel(LabelCamDir, 1, False);
-  CreateLabel(LabelCamUp, 2, False);
-
-  CreateLabel(LabelSceneLoad, 3);
   CreateLabel(LabelSpare, 2);
   CreateLabel(LabelFPS, 1);
   CreateLabel(LabelRender, 0);
-  CreateButton(PointlessButton, 'The Completely Pointless Load Botton', 5, @PointlessButtonClick);
-  WriteLnLog('LoadViewport #2 : ' + FormatFloat('####0.000', (CastleGetTickCount64 - AppTime) / 1000) + ' : ');
+
+  ViewFromRadius(2, Vector3(-1, -1, -1));
 end;
 
 procedure TCastleApp.LoadScene(filename: String);
-var
-  ProfileStart: TCastleProfilerTime;
 begin
   try
-    ProfileStart := Profiler.Start('Scene loading profile - ' + filename);
     Scene := TCastleScene.Create(Application);
-    Scene.Spatial := [ssStaticCollisions, ssDynamicCollisions, ssRendering];
+    Scene.Spatial := [ssDynamicCollisions, ssRendering];
     Scene.Load(filename);
+    Scene.Normalize;
     Scene.PrepareResources([prSpatial, prRenderSelf, prRenderClones, prScreenEffects],
         True,
         Viewport.PrepareParams);
     Viewport.Items.Add(Scene);
     Viewport.Items.MainScene := Scene;
-    Profiler.Stop(ProfileStart, True);
   except
     on E : Exception do
       begin
@@ -174,46 +204,11 @@ begin
 end;
 
 procedure TCastleApp.BeforeRender;
-var
-  theta: Single;
-  Pos, Dir, Up: TVector3;
 begin
   inherited;
   LabelFPS.Caption := 'FPS = ' + FormatFloat('####0.00', Container.Fps.RealFps);
   LabelRender.Caption := 'Render = ' + FormatFloat('####0.00', Container.Fps.OnlyRenderFps);
 
-  if not(Scene = nil) then
-    begin
-    Viewport.Camera.GetView(Pos, Dir, Up);
-
-    LabelCamPos.Caption := 'Cam Pos : ' +
-      FormatFloat('####0.00', Pos.X) + ', ' +
-      FormatFloat('####0.00', Pos.Y) + ', ' +
-      FormatFloat('####0.00', Pos.Z);
-
-    LabelCamDir.Caption := 'Cam Dir : ' +
-      FormatFloat('####0.00', Dir.X) + ', ' +
-      FormatFloat('####0.00', Dir.Y) + ', ' +
-      FormatFloat('####0.00', Dir.Z);
-
-    LabelCamUp.Caption := 'Cam Up : ' +
-      FormatFloat('####0.00', Up.X) + ', ' +
-      FormatFloat('####0.00', Up.Y) + ', ' +
-      FormatFloat('####0.00', Up.Z);
-
-      if RotateScene then
-        begin
-          // Set angle (theta) to revolve completely once every SecsPerRot
-          theta := ((CastleGetTickCount64 mod
-                    (SecsPerRot * 1000)) /
-                    (SecsPerRot * 1000)) * (Pi * 2);
-
-          // Rotate the scene in Y
-          // Change to Vector4(1, 0, 0, theta); to rotate in X
-
-          Scene.Rotation := Vector4(0, 1, 0, theta);
-      end;
-    end;
 end;
 
 procedure TCastleApp.Render;
@@ -223,8 +218,7 @@ begin
   if PrepDone and GLInitialized and RenderReady then
     begin
       PrepDone := False;
-      PointlessButtonClick(nil);
-      WriteLnLog('Scene Loaded (displayed?) : ' + FormatFloat('####0.000', (CastleGetTickCount64 - AppTime) / 1000));
+      BootStrap;
     end;
   RenderReady := True;
 end;
