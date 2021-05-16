@@ -5,7 +5,7 @@ unit GUIInitialization;
 interface
 
 uses
-  Classes, SysUtils, Math, CastleUIState, CastleProgress,
+  Classes, SysUtils, Math, CastleUIState,
   Forms, Controls, Graphics, Dialogs, CastleControl, MainGameUnit,
   CastleControls, CastleColors, CastleUIControls,
   CastleTriangles, CastleShapes, CastleVectors,
@@ -58,14 +58,11 @@ begin
   CastleApp := TCastleApp.Create(Application);
   TUIState.Current := CastleApp;
   Window.Container.UIScaling := usDpiScale;
-  AppProgress := TAppProgress.Create;
-  Progress.UserInterface := AppProgress;
 end;
 
 procedure TCastleForm.WindowClose(Sender: TObject);
 begin
   WriteLnLog('WindowClose : ' + FormatFloat('####0.000', (CastleGetTickCount64 - AppTime) / 1000) + ' : ');
-  FreeAndNil(AppProgress);
 end;
 
 end.

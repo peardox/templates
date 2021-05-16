@@ -6,7 +6,7 @@ interface
 
 uses
   SysUtils, // For FreeAndNil
-  CastleWindow, CastleProgress, CastleScene, CastleControls, CastleLog, CastleUIState,
+  CastleWindow, CastleScene, CastleControls, CastleLog, CastleUIState,
   CastleTimeUtils, CastleApplicationProperties, CastleUIControls, MainGameUnit;
 
 procedure ApplicationInitialize;
@@ -27,8 +27,6 @@ begin
   CastleApp := TCastleApp.Create(Application);
   TUIState.Current := CastleApp;
   Window.Container.UIScaling := usDpiScale;
-  AppProgress := TAppProgress.Create;
-  Progress.UserInterface := AppProgress;
 end;
 
 initialization
@@ -59,7 +57,5 @@ initialization
     In particular, it is not allowed to read files before ApplicationInitialize
     (because in case of non-desktop platforms,
     some necessary resources may not be prepared yet). }
-finalization
-  FreeAndNil(AppProgress);
 end.
 
