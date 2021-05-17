@@ -9,13 +9,13 @@ uses
   CastleWindow, CastleScene, CastleControls, CastleLog, CastleUIState,
   CastleTimeUtils, CastleApplicationProperties, CastleUIControls, MainGameUnit;
 
+var
+  Window: TCastleWindowBase;
+  
 procedure ApplicationInitialize;
 
 implementation
 
-var
-  Window: TCastleWindowBase;
-  
 { One-time initialization of resources. }
 procedure ApplicationInitialize;
 begin
