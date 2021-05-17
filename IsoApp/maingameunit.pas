@@ -14,7 +14,7 @@ uses
   CastleControls, CastleColors, CastleUIControls,
   CastleTriangles, CastleShapes, CastleVectors,
   CastleSceneCore, CastleScene, CastleTransform,
-  CastleViewport, CastleCameras,
+  CastleViewport, CastleCameras, CastleProjection,
   X3DNodes, X3DFields, X3DTIme,
   CastleImages, CastleGLImages,
   CastleTextureImages, CastleCompositeImage,
