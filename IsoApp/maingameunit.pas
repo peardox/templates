@@ -46,7 +46,6 @@ type
     LabelSpare: TCastleLabel;
   public
     procedure BootStrap;
-    procedure PointlessButtonClick(Sender: TObject);
     procedure CreateButton(var objButton: TCastleButton; const ButtonText: String; const Line: Integer; const ButtonCode: TNotifyEvent = nil);
     procedure CreateLabel(var objLabel: TCastleLabel; const Line: Integer; const BottomUp: Boolean = True; RightAlign: Boolean = False);
     procedure Start; override; // TUIState
